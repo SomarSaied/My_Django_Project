@@ -8,7 +8,7 @@
     <p {% if mess.tags %} class="alert alert-{{mess.tags}} mb-5" {% endif %}>{{mess}}</p>
     {% endfor %}
     {% endif %}<br> 
-    <form actiom="" method="POST" novalidate >
+    <form  method="POST" >
         {% csrf_token %}
          {% for fm in form %}
          <div class ="form-group">
