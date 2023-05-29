@@ -2,12 +2,11 @@ from django.shortcuts import render, HttpResponseRedirect
 from django.contrib import messages
 from .forms import signupform, loginform, Postform
 from django.contrib.auth import authenticate, login, logout
-from allauth.account.views import LogoutView
-
 from django.contrib.auth.models import Group
 from .models import Post
+from allauth.account.views import LogoutView
 
-i=0
+
 # Create your views here.
 def home(request):
     posts = Post.objects.all()
@@ -32,7 +31,11 @@ def user_login(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, 'Logged in successfully')
-                i=+1
+
+                # Speichern Sie den Google-Authentifizierungstoken in der Sitzung
+                google_auth_token = user.socialaccount_set.filter(provider='google')[0].socialtoken_set.first().token
+                request.session['google_auth_token'] = google_auth_token
+
                 return HttpResponseRedirect('/dashboard/')
     else:
         fm = loginform()
@@ -50,10 +53,18 @@ def dashboard(request):
         return HttpResponseRedirect('/login/')
 
 
+
+
 def user_logout(request):
-    logout(request)
+    # Löschen Sie den Google-Authentifizierungstoken aus der Sitzung
+    if 'google_auth_token' in request.session:
+        del request.session['google_auth_token']
+
+    # Django-Allauth-Abmeldung aufrufen
     logout_view = LogoutView.as_view()
-    return logout_view(request, next_page='/')
+    return logout_view(request, next_page='/login/')
+
+
 
 
 def user_signup(request):
