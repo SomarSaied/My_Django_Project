@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import Group
 from .models import Post
 from allauth.account.views import LogoutView
-
+from allauth.socialaccount.models import SocialToken
 
 # Create your views here.
 def home(request):
@@ -32,15 +32,16 @@ def user_login(request):
                 login(request, user)
                 messages.success(request, 'Logged in successfully')
 
-                # Speichern Sie den Google-Authentifizierungstoken in der Sitzung
-                google_auth_token = user.socialaccount_set.filter(provider='google')[0].socialtoken_set.first().token
-                request.session['google_auth_token'] = google_auth_token
+                # Überprüfen, ob ein Google-Authentifizierungstoken vorhanden ist
+                social_tokens = SocialToken.objects.filter(account__user=user, account__provider='google')
+                if social_tokens.exists():
+                    google_auth_token = social_tokens.first().token
+                    request.session['google_auth_token'] = google_auth_token
 
                 return HttpResponseRedirect('/dashboard/')
     else:
         fm = loginform()
     return render(request, 'blog/login.html', {'form': fm})
-
 
 def dashboard(request):
     if request.user.is_authenticated:
